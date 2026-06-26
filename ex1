@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주일학교 성경 골든벨 30선</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Nanum Gothic', sans-serif; 
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef08a 100%);
+            min-height: 100vh;
+        }
+        .kids-font {
+            font-family: 'Gaegu', cursive;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar for hints and lists */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-4 md:p-6 overflow-x-hidden">
+
+    <!-- Main Container -->
+    <main id="app" class="w-full max-w-2xl my-auto fade-in"></main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 text-xs text-blue-700/60 font-semibold">
+        © 주일학교 성경 지식 퀴즈 - 하나님의 말씀은 내 발의 등이요 내 길의 빛이니이다! 🌟
+    </footer>
+
+    <!-- Custom Modal Container (for Alerts / Hints) -->
+    <div id="modal-container" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden fade-in">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border-yellow-300 transform scale-95 transition-transform duration-300" id="modal-content">
+            <div id="modal-icon" class="text-5xl mb-3">💡</div>
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-2">알림</h3>
+            <p id="modal-body" class="text-gray-600 mb-6 whitespace-pre-line leading-relaxed"></p>
+            <button onclick="closeModal()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 px-6 rounded-2xl shadow-md transition active:scale-95">
+                확인했어요!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 성경 퀴즈 데이터셋 (30문항 교차 혼합 구성)
+        const quizQuestions = [
+            {
+                id: 1,
+                type: 'short',
+                q: '하나님께서 세상을 총 며칠 동안 창조하셨나요?',
+                a: '6일',
+                altAnswers: ['6', '육일', '엿새'],
+                hint: '마지막 날에 하나님의 형상대로 사람을 만드셨고, 일곱째 날에는 안식하셨어요.'
+            },
+            {
+                id: 2,
+                type: 'choice',
+                q: '구약의 예언대로 예수님이 아기로 태어나신 유대 땅의 작은 동네 이름은 어디인가요?',
+                a: '베들레헴',
+                options: ['나사렛', '예루살렘', '베들레헴', '여리고'],
+                hint: '미가 선지자가 예언했던 작은 고을이에요.'
+            },
+            {
+                id: 3,
+                type: 'short',
+                q: '믿음의 조상 아브라함부터 시작되는 4대의 대표적인 믿음의 족보(조상들)를 순서대로 적어보세요. (예: 아브라함-이삭-야곱-요셉)',
+                a: '아브라함-이삭-야곱-요셉',
+                altAnswers: ['아브라함 이삭 야곱 요셉', '아브라함,이삭,야곱,요셉', '아브라함 이삭 야겁 요셉'],
+                hint: '아브라함 다음에 100세에 얻은 아들, 그 후 팥죽으로 형의 장자권을 산 아들, 마지막으로 애굽 총리가 된 아들이에요.'
+            },
+            {
+                id: 4,
+                type: 'choice',
+                q: '예수님께서 공생애(공적 활동)를 시작하시기 전, 요단강에서 예수님께 세례를 베푼 사람은 누구인가요?',
+                a: '세례 요한',
+                options: ['베드로', '세례 요한', '바울', '모세'],
+                hint: '광야에서 약대 털옷을 입고 메뚜기와 석청을 먹으며 주님의 길을 예비한 사람이에요.'
+            },
+            {
+                id: 5,
+                type: 'short',
+                q: '아브라함이 100세에 얻은 아들로, 모리아 산에서 제물로 바치려 했던 사람은 누구인가요?',
+                a: '이삭',
+                altAnswers: ['이삭'],
+                hint: '이름의 뜻이 "웃음"이라는 아주 순종적인 아들이에요.'
+            },
+            {
+                id: 6,
+                type: 'choice',
+                q: '다음 중 예수님의 열두 제자 이름에 포함되지 않는 사람은 누구인가요?',
+                a: '바울',
+                options: ['베드로', '마태', '도마', '바울'],
+                hint: '이 인물은 다메섹 도상에서 부활하신 예수님을 만난 위대한 이방인의 사도예요.'
+            },
+            {
+                id: 7,
+                type: 'short',
+                q: '이삭의 아들로, 얍복 나루터에서 천사와 밤새 씨름한 후 ‘이스라엘’이라는 새 이름을 받은 사람은 누구인가요?',
+                a: '야곱',
+                altAnswers: ['야곱'],
+                hint: '형 에서의 낯을 피해 삼촌 라반의 집으로 도망갔던 인물이에요.'
+            },
+            {
+                id: 8,
+                type: 'choice',
+                q: '예수님이 어린아이가 바친 보리떡 5개와 물고기 2개로 5,000명이 넘는 사람들을 배불리 먹이신 기적은 무엇인가요?',
+                a: '오병이어의 기적',
+                options: ['가나 혼인잔치 기적', '오병이어의 기적', '칠병이어의 기적', '풍랑을 잔잔하게 하신 기적'],
+                hint: '한자어로 다섯(오) 떡(병) 두(이) 물고기(어)라는 뜻이 담겨있어요.'
+            },
+            {
+                id: 9,
+                type: 'short',
+                q: '이스라엘(야곱)의 아들들을 통해 세워진 이스라엘의 지파는 모두 몇 지파인가요?',
+                a: '12지파',
+                altAnswers: ['12', '열두 지파', '열두지파', '12지파'],
+                hint: '야곱의 총 아들 숫자와 지파의 숫자는 같아요.'
+            },
+            {
+                id: 10,
+                type: 'choice',
+                q: '예수님의 열두 제자 중 한 명이었으나, 은 30냥을 받고 대제사장들에게 예수님을 팔아넘긴 배신자는 누구인가요?',
+                a: '가룟 유다',
+                options: ['가룟 유다', '도마', '시몬', '빌립'],
+                hint: '주님께 입맞춤을 하며 군병들에게 신호를 주었던 비극적인 제자예요.'
+            },
+            {
+                id: 11,
+                type: 'short',
+                q: '형들의 시기 질투로 애굽(이집트)에 종으로 팔려갔으나, 나중에 꿈 해몽을 통해 총리가 된 야곱의 아들은?',
+                a: '요셉',
+                altAnswers: ['요셉'],
+                hint: '어릴 적 채색옷을 즐겨 입었고, 하나님이 언제나 동행해 형통케 하셨던 꿈꾸는 소년이에요.'
+            },
+            {
+                id: 12,
+                type: 'choice',
+                q: '예수님이 십자가를 지시기 전날 밤, 대속의 잔을 앞에 두고 땀방울이 핏방울이 되도록 기도하신 동산의 이름은?',
+                a: '겟세마네 동산',
+                options: ['시내산', '감람산', '겟세마네 동산', '변화산'],
+                hint: '"내 원대로 마시옵고 아버지의 원대로 되기를 원하나이다"라고 간절히 기도하신 곳이에요.'
+            },
+            {
+                id: 13,
+                type: 'short',
+                q: '하나님께서 불타는 떨기나무 가운데서 부르셨으며, 백성들을 이끌고 홍해를 육지같이 가른 출애굽의 지도자는?',
+                a: '모세',
+                altAnswers: ['모세'],
+                hint: '나일강 물속에서 건져냄을 받은 인물이에요.'
+            },
+            {
+                id: 14,
+                type: 'choice',
+                q: '예수님이 총독 빌라도에게 재판을 받으시고, 인류의 죄를 대신해 십자가에 못 박히신 언덕의 이름은 무엇인가요?',
+                a: '골고다',
+                options: ['골고다', '시온산', '아라랏산', '호렙산'],
+                hint: '해골의 곳이라는 뜻을 가진 히브리어 명칭이에요.'
+            },
+            {
+                id: 15,
+                type: 'short',
+                q: '하나님이 모세를 통해 시내산에서 친히 두 돌판에 새겨 이스라엘 백성에게 주신 10가지 계명을 무엇이라고 하나요?',
+                a: '십계명',
+                altAnswers: ['십계명'],
+                hint: '열(십) 가지 법(계명)이라는 의미를 지녀요.'
+            },
+            {
+                id: 16,
+                type: 'choice',
+                q: '예수님은 십자가에서 숨을 거두신 지 총 며칠 만에 사망의 권세를 깨뜨리고 다시 살아나셨나요?',
+                a: '3일 만에',
+                options: ['다음 날', '3일 만에', '7일 만에', '40일 만에'],
+                hint: '금요일 오후에 무덤에 묻히신 뒤, 안식 후 첫날 새벽에 부활하셨어요.'
+            },
+            {
+                id: 17,
+                type: 'short',
+                q: '[십계명 제2계명] "너를 위하여 새긴 (      )을 만들지 말고... 그것들에게 절하지 말며 섬기지 말라."',
+                a: '우상',
+                altAnswers: ['우상', '가짜 신', '우상숭배'],
+                hint: '보이지 않는 하나님 대신 사람이 손으로 나무나 금속으로 조각해 만든 가짜 신들을 뜻해요.'
+            },
+            {
+                id: 18,
+                type: 'choice',
+                q: '부활하신 예수님이 제자들이 공식적으로 모인 자리에 나타나셨을 때, 없었던 제자로서 옆구리에 직접 손을 넣어보지 않고는 믿지 못하겠다고 의심했던 제자는?',
+                a: '도마',
+                options: ['베드로', '안드레', '도마', '요한'],
+                hint: '"너는 나를 본 고로 믿느냐 보지 못하고 믿는 자들은 복되도다"라는 말씀을 들은 제자예요.'
+            },
+            {
+                id: 19,
+                type: 'short',
+                q: '[십계명 제4계명] "안식일을 기억하여 거룩하게 지키라." 엿새(6일) 동안은 힘써 무엇을 해야 할까요?',
+                a: '네 모든 일을 행할 것',
+                altAnswers: ['네모든일을행할것', '네 모든 일', '모든 일', '일', '열심히 일하기', '모든 일을 할 것'],
+                hint: '성경 말씀 그대로 "엿새 동안은 힘써 (네 모든 일을 행할) 것이나"에서 괄호에 들어갈 부분이에요.'
+            },
+            {
+                id: 20,
+                type: 'choice',
+                q: '부활하신 예수님이 이 땅에서 40일 동안 계시다가, 제자들이 보는 앞에서 구름을 타고 하늘로 올라가신 역사적 사건은?',
+                a: '승천',
+                options: ['부활', '승천', '재림', '성령 강림'],
+                hint: '하늘(승) 오르다(천)라는 한자가 사용되었어요.'
+            },
+            {
+                id: 21,
+                type: 'short',
+                q: '[십계명 제8계명] 남의 물건이나 귀중한 재산을 허락 없이 몰래 가져가지 말라는 의미를 담은 8번째 계명은?',
+                a: '도둑질하지 말라',
+                altAnswers: ['도둑질하지말라', '도둑질하지 말라', '도적질하지 말라', '남의 것을 탐내지 말라'],
+                hint: '물건을 훔치는 나쁜 행동을 하지 말라는 약속이에요.'
+            },
+            {
+                id: 22,
+                type: 'choice',
+                q: '성경책은 총 66권으로 이루어져 있습니다. 가장 첫 번째 책은 창세기인데요, 그렇다면 가장 마지막에 나오는 책은 무엇인가요?',
+                a: '요한계시록',
+                options: ['말라기', '마태복음', '유다서', '요한계시록'],
+                hint: '예수의 제자 요한이 밧모섬에서 받아 적은, 세상 마지막 날과 천국에 관한 예언서예요.'
+            },
+            {
+                id: 23,
+                type: 'short',
+                q: '[십계명 제9계명] 내 이웃에 대하여 나쁜 유언비어나 거짓말로 피해를 주거나 사실이 아닌 것을 꾸며 말하지 말라는 계명은?',
+                a: '네 이웃에 대하여 거짓 증거하지 말라',
+                altAnswers: ['네이웃에대하여거짓증거하지말라', '거짓말하지 말라', '거짓 증거하지 말라', '거짓증거하지말라'],
+                hint: 'ㄱ짓 증ㄱ하지 말라.'
+            },
+            {
+                id: 24,
+                type: 'choice',
+                q: '예수님께서 제자들에게 "너희는 이렇게 기도하라"며 직접 모범적으로 가르쳐주신 기도는 무엇인가요?',
+                a: '주기도문',
+                options: ['사도신경', '주기도문', '십계명', '통성기도'],
+                hint: '주님(주)이 가르쳐 주신 기도의 문장(기도문)이에요.'
+            },
+            {
+                id: 25,
+                type: 'short',
+                q: '모세가 요단강을 건너기 전 숨을 거둔 뒤, 하나님의 임명을 받아 이스라엘 군대를 이끌고 약속의 땅 가나안으로 들어간 용맹한 지도자는?',
+                a: '여호수아',
+                altAnswers: ['여호수아'],
+                hint: '모세의 수종자였으며 갈렙과 함께 가나안 땅을 탐지하고 긍정적인 고백을 드렸던 믿음의 사람이에요.'
+            },
+            {
+                id: 26,
+                type: 'choice',
+                q: '예수님께서 성경 전체를 요약하시며 말씀하신 "가장 크고 첫째 되는 계명"은 무엇인가요?',
+                a: '온 마음을 다해 하나님을 사랑하는 것',
+                options: ['부모님을 공경하는 것', '온 마음을 다해 하나님을 사랑하는 것', '가난한 사람을 돕는 것', '교회를 열심히 다니는 것'],
+                hint: '네 마음을 다하고 목숨을 다하고 뜻을 다하여 주 너의 여호와를 사랑하라고 하신 말씀이에요.'
+            },
+            {
+                id: 27,
+                type: 'short',
+                q: '여호수아와 이스라엘 백성들이 하나님의 말씀에 의지하여 하루에 한 바퀴씩, 마지막 날엔 일곱 바퀴를 돌고 외쳤을 때 와르르 무너져 내린 가나안의 견고한 첫 성은?',
+                a: '여리고 성',
+                altAnswers: ['여리고', '여리고성', '여리고 성'],
+                hint: '종려나무의 성읍이라 불린, 붉은 벽돌이 가득했던 가나안 성이에요.'
+            },
+            {
+                id: 28,
+                type: 'choice',
+                q: '예수님이 특별히 제자로 임명하셔서 항상 가르쳐 주시고 세상을 변화시키기 위해 세우신 주님의 핵심 제자는 총 몇 명인가요?',
+                a: '12명',
+                options: ['7명', '10명', '12명', '70명'],
+                hint: '이스라엘 12지파와 수의 상징성이 같습니다.'
+            },
+            {
+                id: 29,
+                type: 'short',
+                q: '하나님이 자신의 거룩한 형상을 따라 흙으로 가장 먼저 빚어 만드시고 생기를 그 코에 불어넣으신 인류 최초의 사람은?',
+                a: '아담',
+                altAnswers: ['아담'],
+                hint: '그의 갈빗대로 하와를 창조하셨고 에덴동산을 함께 다스렸어요.'
+            },
+            {
+                id: 30,
+                type: 'choice',
+                q: '예수님이 요단강 세례 이후 공생애 시작에 앞서, 광야에서 40일 동안 주린 상태에서 누구에게 세 가지 질문으로 시험을 받으셨나요?',
+                a: '사탄 (마귀)',
+                options: ['바리새인', '헤롯 왕', '사탄 (마귀)', '빌라도'],
+                hint: '기록된 성경 말씀인 "사람이 떡으로만 살 것이 아니요" 등으로 물리치신 정체예요.'
+            }
+        ];
+
+        let state = {
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            gameState: 'start', // 'start' | 'playing' | 'feedback' | 'finished'
+            userInput: '',
+            feedback: {
+                isCorrect: false,
+                message: ''
+            }
+        };
+
+        // Fisher-Yates shuffle algorithm
+        function shuffleQuestions(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Clip board share helper
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; // Prevent scrolling to bottom
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showModal('📋 복사 완료!', '결과 메시지가 클립force 복사되었어요!\n카카오톡 단톡방이나 문자에 붙여넣기(Ctrl+V)해서 친구들에게 공유해 보세요! 😉', '🎉');
+            } catch (err) {
+                showModal('⚠️ 복사 실패', '복사하기가 지원되지 않는 환경입니다. 직접 결과를 알려주세요!', '😢');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function shareResults() {
+            let ratingTitle = '';
+            if (state.score >= 26) {
+                ratingTitle = '👑 영광의 성경 박사님!';
+            } else if (state.score >= 18) {
+                ratingTitle = '👍 우수한 믿음의 용사!';
+            } else {
+                ratingTitle = '🌱 무럭무럭 새싹 친구!';
+            }
+
+            const text = `📖 [주일학교 성경 골든벨] 도전 완료! 🏆\n\n✨ 나의 성경 지식 점수는?\n👉 ${state.score} / 30점 (${ratingTitle})\n\n우와! 너도 성경 골든벨에 도전해서 성경 박사가 되어볼래? 하나님의 말씀은 내 발의 등이요 내 길의 빛이란다! 🌟`;
+            copyToClipboard(text);
+        }
+
+        function initApp() {
+            state.questions = shuffleQuestions(quizQuestions);
+            state.currentIndex = 0;
+            state.score = 0;
+            state.gameState = 'start';
+            state.userInput = '';
+            render();
+        }
+
+        function startQuiz() {
+            state.gameState = 'playing';
+            render();
+        }
+
+        function submitAnswer(chosenAnswer) {
+            const currentQ = state.questions[state.currentIndex];
+            let rawUserAnswer = chosenAnswer !== undefined ? chosenAnswer : state.userInput;
+            
+            if (!rawUserAnswer || rawUserAnswer.trim() === '') {
+                showModal('⚠️ 알림', '정답을 입력하거나 선택해 주세요!', 'ℹ️');
+                return;
+            }
+
+            // Normalization: Lowercase, space strip, special character strip
+            const normalize = (str) => {
+                return str.replace(/\s+/g, '') // 공백 제거
+                          .replace(/[.,\-_~'"]/g, '') // 문장 기호 제거
+                          .toLowerCase()
+                          .trim();
+            };
+
+            const cleanUser = normalize(rawUserAnswer);
+            const cleanCorrect = normalize(currentQ.a);
+
+            let isCorrect = cleanUser === cleanCorrect;
+
+            // Check alternative answers
+            if (!isCorrect && currentQ.altAnswers) {
+                isCorrect = currentQ.altAnswers.some(alt => normalize(alt) === cleanUser || cleanUser.includes(normalize(alt)));
+            }
+
+            // Additional checks for specific questions to increase friendliness
+            if (!isCorrect) {
+                // If the answer is partially included for lenient marking
+                if (cleanUser.includes(cleanCorrect) && cleanUser.length <= cleanCorrect.length + 3) {
+                    isCorrect = true;
+                }
+            }
+
+            if (isCorrect) {
+                state.score++;
+                state.feedback = {
+                    isCorrect: true,
+                    message: '🎉 참 잘했어요! 정답입니다! 👏'
+                };
+            } else {
+                state.feedback = {
+                    isCorrect: false,
+                    message: `아쉬워요! 정답은 [ ${currentQ.a} ] 입니다.`
+                };
+            }
+
+            state.gameState = 'feedback';
+            render();
+        }
+
+        function nextQuestion() {
+            if (state.currentIndex < state.questions.length - 1) {
+                state.currentIndex++;
+                state.userInput = '';
+                state.gameState = 'playing';
+            } else {
+                state.gameState = 'finished';
+            }
+            render();
+        }
+
+        function showModal(title, text, icon = '💡') {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = text;
+            document.getElementById('modal-icon').innerText = icon;
+            
+            const container = document.getElementById('modal-container');
+            const content = document.getElementById('modal-content');
+            container.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const container = document.getElementById('modal-container');
+            const content = document.getElementById('modal-content');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 150);
+        }
+
+        function showHintPopup() {
+            const currentQ = state.questions[state.currentIndex];
+            showModal('💡 성경 박사님의 힌트', currentQ.hint, '🔎');
+        }
+
+        function render() {
+            const container = document.getElementById('app');
+            
+            if (state.gameState === 'start') {
+                container.innerHTML = `
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-10 text-center border-t-8 border-yellow-400 slide-up max-w-md mx-auto">
+                        <div class="text-6xl mb-4">📖</div>
+                        <h1 class="text-3xl md:text-4xl font-extrabold text-blue-600 mb-2 kids-font">주일학교 성경 골든벨</h1>
+                        <p class="text-yellow-500 font-bold text-lg mb-6 kids-font">예수님 사랑 성경 30선 퀴즈</p>
+                        
+                        <div class="bg-blue-50 rounded-2xl p-4 text-left text-sm text-gray-600 mb-8 space-y-2 border border-blue-100">
+                            <p class="font-bold text-blue-800 text-center text-base mb-1">🎮 이런 방식으로 진행돼요!</p>
+                            <p>✨ <b>단답형 15문제</b>와 <b>객관식 15문제</b>가 골고루 섞여 있어요.</p>
+                            <p>✨ 매번 시작할 때마다 문제 순서가 무작위로 바뀌어 나와요.</p>
+                            <p>✨ 모를 때는 주저없이 <b>'힌트💡'</b> 버튼을 꾹 누르세요!</p>
+                        </div>
+
+                        <button 
+                            onclick="startQuiz()"
+                            class="w-full bg-yellow-400 hover:bg-yellow-500 active:scale-95 text-blue-900 font-extrabold py-4 rounded-2xl shadow-lg transition duration-200 text-xl kids-font tracking-wider"
+                        >
+                            출발! 성경 여행 가기 🚀
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (state.gameState === 'finished') {
+                let ratingTitle = '';
+                let ratingIcon = '';
+                let ratingColor = '';
+                let encouragement = '';
+
+                if (state.score >= 26) {
+                    ratingTitle = '👑 영광의 성경 박사님!';
+                    ratingIcon = '🏆';
+                    ratingColor = 'text-yellow-500';
+                    encouragement = '하나님 말씀의 깊이를 훤히 꿰뚫고 있군요! 믿음 안에서 무럭무럭 자라나 세상을 축복하는 멋진 어린이가 될 거예요! 축하해요! 🎉';
+                } else if (state.score >= 18) {
+                    ratingTitle = '👍 우수한 믿음의 용사!';
+                    ratingIcon = '⭐';
+                    ratingColor = 'text-green-500';
+                    encouragement = '성경과 정말 친밀한 친구군요! 조금만 더 하면 완벽한 성경 골든벨의 주역이 될 수 있어요. 자랑스러워요! 🥰';
+                } else {
+                    ratingTitle = '🌱 무럭무럭 새싹 친구!';
+                    ratingIcon = '🌱';
+                    ratingColor = 'text-blue-500';
+                    encouragement = '참 열심히 잘 풀어주었어요! 말씀을 더 자주 가슴에 품다 보면 다음에는 꼭 성경 백 점 박사가 될 거예요! 말씀 일기 파이팅! 💪';
+                }
+
+                container.innerHTML = `
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-10 text-center slide-up max-w-md mx-auto border-t-8 border-indigo-500">
+                        <div class="text-6xl mb-4">${ratingIcon}</div>
+                        <h2 class="text-3xl font-extrabold text-blue-700 mb-2 kids-font">도전 완료!</h2>
+                        <p class="text-sm font-bold text-gray-400 mb-6 uppercase tracking-widest">Your Score Card</p>
+                        
+                        <div class="bg-slate-50 rounded-2xl p-6 mb-6 border border-slate-100">
+                            <div class="text-6xl font-black ${ratingColor} mb-2">${state.score} <span class="text-2xl text-gray-400 font-bold">/ 30</span></div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">${ratingTitle}</h3>
+                            <p class="text-gray-600 text-sm leading-relaxed">${encouragement}</p>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <button 
+                                onclick="shareResults()"
+                                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-4 rounded-2xl shadow-lg transition active:scale-95 text-lg kids-font tracking-wide"
+                            >
+                                카카오톡 결과 공유하기 💬
+                            </button>
+                            <button 
+                                onclick="initApp()"
+                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg transition active:scale-95 text-lg"
+                            >
+                                새로운 마음으로 다시 풀기 🔄
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 'playing' or 'feedback' state
+            const currentQ = state.questions[state.currentIndex];
+            const progressPercent = ((state.currentIndex + (state.gameState === 'feedback' ? 1 : 0)) / state.questions.length) * 100;
+
+            let interactionHtml = '';
+
+            if (state.gameState === 'playing') {
+                if (currentQ.type === 'choice') {
+                    // 객관식 렌더링
+                    interactionHtml = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-4">
+                            ${currentQ.options.map((option, index) => {
+                                return `
+                                    <button 
+                                        onclick="submitAnswer('${option.replace(/'/g, "\\'")}')"
+                                        class="p-4 text-left border-2 border-blue-100 rounded-2xl hover:bg-blue-50 hover:border-blue-400 transition-all font-bold text-gray-700 active:bg-blue-100 shadow-sm text-sm md:text-base flex items-center gap-3 group"
+                                    >
+                                        <span class="w-8 h-8 rounded-xl bg-blue-100 group-hover:bg-blue-200 text-blue-600 flex items-center justify-center font-black transition text-sm">${index + 1}</span>
+                                        <span class="flex-1">${option}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                } else {
+                    // 단답형 렌더링
+                    interactionHtml = `
+                        <div class="flex flex-col space-y-4 mt-2">
+                            <input 
+                                id="short-answer-input"
+                                type="text" 
+                                value="${state.userInput}"
+                                oninput="state.userInput = this.value"
+                                onkeydown="if(event.key === 'Enter') submitAnswer()"
+                                placeholder="정답을 톡톡! 입력해 주세요"
+                                class="w-full p-4 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-400 text-center font-bold text-lg text-gray-800 placeholder-gray-400 shadow-inner"
+                                autofocus
+                            />
+                            <div class="flex gap-3">
+                                <button 
+                                    onclick="submitAnswer()"
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-md transition active:scale-95 text-lg kids-font tracking-wide"
+                                >
+                                    정답 완료 ✏️
+                                </button>
+                                <button 
+                                    onclick="showHintPopup()"
+                                    class="px-5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-extrabold py-4 rounded-2xl transition active:scale-95 flex items-center justify-center gap-1.5"
+                                    title="힌트 보기"
+                                >
+                                    <span class="text-xl">💡</span>
+                                    <span class="kids-font text-lg">힌트</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // feedback state
+                const isCorrect = state.feedback.isCorrect;
+                interactionHtml = `
+                    <div class="text-center p-6 rounded-2xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-rose-50 border border-rose-200'} fade-in">
+                        <div class="text-5xl mb-2">${isCorrect ? '⭕' : '❌'}</div>
+                        <h4 class="text-lg font-extrabold ${isCorrect ? 'text-emerald-800' : 'text-rose-800'} mb-1">
+                            ${isCorrect ? '정답입니다!' : '오답입니다'}
+                        </h4>
+                        <p class="text-gray-700 text-sm md:text-base font-semibold mb-6">
+                            ${state.feedback.message}
+                        </p>
+                        <button 
+                            id="next-btn"
+                            onclick="nextQuestion()"
+                            class="w-full bg-slate-800 hover:bg-slate-900 text-white font-extrabold py-4 rounded-2xl shadow-md transition active:scale-95 text-lg kids-font tracking-wide"
+                        >
+                            ${state.currentIndex < state.questions.length - 1 ? '다음 말씀으로 이동하기 ➡️' : '최종 골든벨 결과 보기 🏆'}
+                        </button>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="w-full space-y-4 slide-up">
+                    <!-- Progress Section -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center px-1">
+                            <span class="bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-black text-blue-800 shadow-sm border border-blue-100">
+                                📖 문제 ${state.currentIndex + 1} / ${state.questions.length}
+                            </span>
+                            <span class="bg-amber-300 px-4 py-1.5 rounded-full text-xs font-black text-blue-900 shadow-sm">
+                                현재 점수: ${state.score}점
+                            </span>
+                        </div>
+                        <div class="w-full bg-blue-900/10 rounded-full h-3.5 shadow-inner p-0.5 overflow-hidden border border-white/60">
+                            <div 
+                                class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300" 
+                                style="width: ${progressPercent}%"
+                            ></div>
+                        </div>
+                    </div>
+
+                    <!-- Question Card Container -->
+                    <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-b-8 border-blue-200/60 min-h-[340px] flex flex-col justify-between">
+                        <div>
+                            <!-- Header tags -->
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold ${currentQ.type === 'choice' ? 'bg-purple-100 text-purple-800' : 'bg-sky-100 text-sky-800'}">
+                                    ${currentQ.type === 'choice' ? '📝 객관식' : '✏️ 주관식 단답형'}
+                                </span>
+                                ${state.gameState === 'playing' && currentQ.type === 'choice' ? `
+                                    <button onclick="showHintPopup()" class="text-xs text-amber-600 hover:text-amber-700 font-extrabold flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg">
+                                        💡 힌트 보기
+                                    </button>
+                                ` : ''}
+                            </div>
+
+                            <!-- Question sentence -->
+                            <h2 class="text-xl md:text-2xl font-black text-gray-800 leading-snug mb-6">
+                                ${currentQ.q}
+                            </h2>
+                        </div>
+
+                        <!-- Response input area -->
+                        <div class="mt-auto">
+                            ${interactionHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Focus management: automatically focuses text input if in play state for short answers
+            if (state.gameState === 'playing' && currentQ.type === 'short') {
+                const textInput = document.getElementById('short-answer-input');
+                if (textInput) textInput.focus();
+            }
+
+            // Focus management for buttons in feedback screen
+            if (state.gameState === 'feedback') {
+                const nextBtn = document.getElementById('next-btn');
+                if (nextBtn) nextBtn.focus();
+            }
+        }
+
+        // Initialize application on load
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
